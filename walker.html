@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebPedometer 2026</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f8f9fa; color: #202124; }
+        
+        /* Header & Controls */
+        header { background: white; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1001; }
+        #stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { text-align: center; background: #f1f3f4; padding: 12px; border-radius: 12px; border: 1px solid #e0e0e0; }
+        .stat-label { font-size: 0.8rem; color: #5f6368; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { display: block; font-size: 1.8rem; font-weight: 700; color: #1a73e8; }
+        
+        #controls { display: flex; justify-content: center; }
+        button { padding: 14px 40px; font-size: 1rem; border: none; border-radius: 30px; cursor: pointer; font-weight: 600; transition: transform 0.1s; width: 100%; max-width: 300px; }
+        button:active { transform: scale(0.98); }
+        #startBtn { background: #1a73e8; color: white; box-shadow: 0 4px 6px rgba(26, 115, 232, 0.2); }
+        #stopBtn { background: #d93025; color: white; display: none; box-shadow: 0 4px 6px rgba(217, 48, 37, 0.2); }
+
+        /* Map */
+        #map { flex-grow: 1; width: 100%; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; }
+
+        /* History */
+        #history-panel { height: 25%; overflow-y: auto; background: white; padding: 15px; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f3f4; }
+        .history-content { cursor: pointer; flex-grow: 1; }
+        .history-item:hover { background: #f8f9fa; }
+        .delete-btn { color: #d93025; background: none; border: 1px solid #fce8e6; border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; width: auto; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div id="stats">
+        <div class="stat-box">
+            <span class="stat-label">Steps</span>
+            <span id="stepCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Distance</span>
+            <span id="distance" class="stat-value">0 m</span>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button id="startBtn">Start New Walk</button>
+        <button id="stopBtn">Stop & Save Session</button>
+    </div>
+</header>
+
+<div id="map"></div>
+
+<div id="history-panel">
+    <h3 style="margin-top:0; font-size: 1.1rem;">Session History</h3>
+    <div id="historyList"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let map, activePath, watchID;
+    let currentWalkCoords = [];
+    let totalDistance = 0;
+    const STEP_FACTOR = 0.76;
+
+    function init() {
+        map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(map);
+        activePath = L.polyline([], {color: '#1a73e8', weight: 6, opacity: 0.8}).addTo(map);
+        renderHistory();
+    }
+
+    function calcDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const dLat = (lat2-lat1) * Math.PI/180;
+        const dLon = (lon2-lon1) * Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function startTracking() {
+        currentWalkCoords = [];
+        totalDistance = 0;
+        updateStats();
+        
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'block';
+
+        watchID = navigator.geolocation.watchPosition(pos => {
+            const { latitude, longitude } = pos.coords;
+            const newPoint = [latitude, longitude];
+
+            if (currentWalkCoords.length > 0) {
+                const last = currentWalkCoords[currentWalkCoords.length - 1];
+                const dist = calcDistance(last[0], last[1], latitude, longitude);
+                if (dist > 2) { 
+                    totalDistance += dist;
+                    updateStats();
+                }
+            } else {
+                map.setView(newPoint, 17);
+            }
+
+            currentWalkCoords.push(newPoint);
+            activePath.setLatLngs(currentWalkCoords);
+            map.panTo(newPoint);
+        }, err => alert("Please enable location access."), { enableHighAccuracy: true });
+    }
+
+    function stopTracking() {
+        navigator.geolocation.clearWatch(watchID);
+        
+        if (currentWalkCoords.length > 1) {
+            const session = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                steps: Math.round(totalDistance / STEP_FACTOR),
+                distance: totalDistance.toFixed(1),
+                path: currentWalkCoords
+            };
+
+            const history = JSON.parse(localStorage.getItem('walkHistory') || '[]');
+            history.unshift(session);
+            localStorage.setItem('walkHistory', JSON.stringify(history));
+        }
+
+        document.getElementById('startBtn').style.display = 'block';
+        document.getElementById('stopBtn').style.display = 'none';
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('historyList');
+        const history = JSON.parse(localStorage.getItem('walkHistory') || '[]');
+        list.innerHTML = history.length ? '' : '<p style="color: #999;">No saved walks yet.</p>';
+        
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+                <div class="history-content" onclick="viewPastWalk(${item.id})">
+                    <strong>${item.date}</strong><br>
+                    <span style="color:#5f6368">${item.steps} steps • ${item.distance}m</span>
+                </div>
+                <button class="delete-btn" onclick="deleteWalk(${item.id})">Delete</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function viewPastWalk(id) {
+        const history = JSON.parse(localStorage.getItem('walkHistory'));
+        const walk = history.find(h => h.id === id);
+        if (walk && walk.path.length) {
+            activePath.setLatLngs(walk.path);
+            map.fitBounds(activePath.getBounds(), {padding: [50, 50]});
+            document.getElementById('stepCount').innerText = walk.steps;
+            document.getElementById('distance').innerText = walk.distance + ' m';
+        }
+    }
+
+    function deleteWalk(id) {
+        let history = JSON.parse(localStorage.getItem('walkHistory'));
+        history = history.filter(h => h.id !== id);
+        localStorage.setItem('walkHistory', JSON.stringify(history));
+        renderHistory();
+    }
+
+    function updateStats() {
+        document.getElementById('distance').innerText = totalDistance.toFixed(1) + ' m';
+        document.getElementById('stepCount').innerText = Math.round(totalDistance / STEP_FACTOR);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startTracking);
+    document.getElementById('stopBtn').addEventListener('click', stopTracking);
+    window.onload = init;
+</script>
+</body>
+</html>
