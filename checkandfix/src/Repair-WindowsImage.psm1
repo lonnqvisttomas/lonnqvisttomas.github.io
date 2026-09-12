@@ -344,6 +344,32 @@ function Invoke-SFCScan {
 }
 
 # ---------------------------------------------------------------------------
+# New-RepairPipelineResult — Build a repair pipeline result object (DRY helper)
+# ---------------------------------------------------------------------------
+
+function New-RepairPipelineResult {
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$OverallSuccess,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.ArrayList]$Steps,
+
+        [Parameter(Mandatory = $true)]
+        [datetime]$StartTime
+    )
+
+    $endTime = Get-Date
+    return [PSCustomObject]@{
+        Steps          = $Steps.ToArray()
+        OverallSuccess = $OverallSuccess
+        StartTime      = $StartTime
+        EndTime        = $endTime
+        Duration       = $endTime - $StartTime
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Start-RepairPipeline — Full DISM + SFC orchestration
 # ---------------------------------------------------------------------------
 
@@ -429,14 +455,7 @@ function Start-RepairPipeline {
             Write-StepResult -Message 'DISM CheckHealth failed' -Status 'Fail'
             if (-not $ContinueOnError) {
                 Write-StepResult -Message 'Pipeline stopped due to failure (use -ContinueOnError to override)' -Status 'Warning'
-                $pipelineEndTime = Get-Date
-                return [PSCustomObject]@{
-                    Steps          = $steps.ToArray()
-                    OverallSuccess = $false
-                    StartTime      = $pipelineStartTime
-                    EndTime        = $pipelineEndTime
-                    Duration       = $pipelineEndTime - $pipelineStartTime
-                }
+                return New-RepairPipelineResult -OverallSuccess $false -Steps $steps -StartTime $pipelineStartTime
             }
         }
 
@@ -453,14 +472,7 @@ function Start-RepairPipeline {
             Write-StepResult -Message 'DISM ScanHealth failed' -Status 'Fail'
             if (-not $ContinueOnError) {
                 Write-StepResult -Message 'Pipeline stopped due to failure (use -ContinueOnError to override)' -Status 'Warning'
-                $pipelineEndTime = Get-Date
-                return [PSCustomObject]@{
-                    Steps          = $steps.ToArray()
-                    OverallSuccess = $false
-                    StartTime      = $pipelineStartTime
-                    EndTime        = $pipelineEndTime
-                    Duration       = $pipelineEndTime - $pipelineStartTime
-                }
+                return New-RepairPipelineResult -OverallSuccess $false -Steps $steps -StartTime $pipelineStartTime
             }
         }
 
@@ -484,14 +496,7 @@ function Start-RepairPipeline {
             Write-StepResult -Message 'DISM RestoreHealth failed' -Status 'Fail'
             if (-not $ContinueOnError) {
                 Write-StepResult -Message 'Pipeline stopped due to failure (use -ContinueOnError to override)' -Status 'Warning'
-                $pipelineEndTime = Get-Date
-                return [PSCustomObject]@{
-                    Steps          = $steps.ToArray()
-                    OverallSuccess = $false
-                    StartTime      = $pipelineStartTime
-                    EndTime        = $pipelineEndTime
-                    Duration       = $pipelineEndTime - $pipelineStartTime
-                }
+                return New-RepairPipelineResult -OverallSuccess $false -Steps $steps -StartTime $pipelineStartTime
             }
         }
     }

@@ -15,6 +15,33 @@
 Set-StrictMode -Version Latest
 
 # ---------------------------------------------------------------------------
+# New-USBExportResult — Build a USB export result object (DRY helper)
+# ---------------------------------------------------------------------------
+
+function New-USBExportResult {
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$Success,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.ArrayList]$Steps,
+
+        [Parameter(Mandatory = $true)]
+        [datetime]$StartTime
+    )
+
+    $endTime = Get-Date
+    return [PSCustomObject]@{
+        Success      = $Success
+        Steps        = $Steps.ToArray()
+        ExportTarget = 'USB'
+        StartTime    = $StartTime
+        EndTime      = $endTime
+        Duration     = $endTime - $StartTime
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Export-ToUSB — Create bootable USB from a Windows installation source
 # ---------------------------------------------------------------------------
 
@@ -86,16 +113,7 @@ function Export-ToUSB {
 
     if (-not $confirmed) {
         Write-StepResult -Message 'Drive selection was not confirmed — aborting USB export' -Status 'Warning'
-
-        $exportEndTime = Get-Date
-        return [PSCustomObject]@{
-            Success      = $false
-            Steps        = $steps.ToArray()
-            ExportTarget = 'USB'
-            StartTime    = $exportStartTime
-            EndTime      = $exportEndTime
-            Duration     = $exportEndTime - $exportStartTime
-        }
+        return New-USBExportResult -Success $false -Steps $steps -StartTime $exportStartTime
     }
 
     Write-StepResult -Message 'Drive selection confirmed' -Status 'Pass'
@@ -124,16 +142,7 @@ function Export-ToUSB {
 
     if (-not $diskpartResult.Success) {
         Write-StepResult -Message 'Diskpart preparation failed — aborting USB export' -Status 'Fail'
-
-        $exportEndTime = Get-Date
-        return [PSCustomObject]@{
-            Success      = $false
-            Steps        = $steps.ToArray()
-            ExportTarget = 'USB'
-            StartTime    = $exportStartTime
-            EndTime      = $exportEndTime
-            Duration     = $exportEndTime - $exportStartTime
-        }
+        return New-USBExportResult -Success $false -Steps $steps -StartTime $exportStartTime
     }
 
     Write-StepResult -Message 'Diskpart preparation completed successfully' -Status 'Pass'
@@ -161,16 +170,7 @@ function Export-ToUSB {
 
     if (-not $copyResult.Success) {
         Write-StepResult -Message 'File copy failed — aborting USB export' -Status 'Fail'
-
-        $exportEndTime = Get-Date
-        return [PSCustomObject]@{
-            Success      = $false
-            Steps        = $steps.ToArray()
-            ExportTarget = 'USB'
-            StartTime    = $exportStartTime
-            EndTime      = $exportEndTime
-            Duration     = $exportEndTime - $exportStartTime
-        }
+        return New-USBExportResult -Success $false -Steps $steps -StartTime $exportStartTime
     }
 
     Write-StepResult -Message 'Installation files copied successfully' -Status 'Pass'
@@ -198,16 +198,7 @@ function Export-ToUSB {
 
     if (-not $bootResult.Success) {
         Write-StepResult -Message 'Boot configuration failed' -Status 'Fail'
-
-        $exportEndTime = Get-Date
-        return [PSCustomObject]@{
-            Success      = $false
-            Steps        = $steps.ToArray()
-            ExportTarget = 'USB'
-            StartTime    = $exportStartTime
-            EndTime      = $exportEndTime
-            Duration     = $exportEndTime - $exportStartTime
-        }
+        return New-USBExportResult -Success $false -Steps $steps -StartTime $exportStartTime
     }
 
     Write-StepResult -Message 'Boot configuration completed successfully' -Status 'Pass'
