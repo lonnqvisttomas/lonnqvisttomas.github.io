@@ -1,0 +1,13 @@
+# Test results
+test-results.xml
+
+# Transcript logs
+*.transcript.txt
+logs/
+
+# PowerShell module cache
+*.psm1.bak
+
+# Temporary files
+*.tmp
+~$*
