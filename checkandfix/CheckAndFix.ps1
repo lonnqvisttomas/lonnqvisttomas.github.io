@@ -293,11 +293,11 @@ if ($null -ne $repairResult) {
         foreach ($step in $repairResult.Steps) {
             $stepStatus = 'FAIL'
             $stepColor = 'Red'
-            if ($step.Success) {
+            if ($step.Result.Success) {
                 $stepStatus = 'PASS'
                 $stepColor = 'Green'
             }
-            Write-Host "    - $($step.Command): $stepStatus" -ForegroundColor $stepColor
+            Write-Host "    - $($step.Name): $stepStatus" -ForegroundColor $stepColor
         }
     }
 }
