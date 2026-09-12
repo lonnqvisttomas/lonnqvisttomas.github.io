@@ -98,9 +98,7 @@ Describe 'Invoke-ExternalCommand' {
 
         It 'Returns result object with correct properties' {
             InModuleScope 'Repair-WindowsImage' {
-                # Mock a simple executable that succeeds
-                Mock cmd.exe { } -ModuleName 'Repair-WindowsImage'
-
+                # Use a real command (cmd /c echo) to get a valid result object
                 $result = Invoke-ExternalCommand -FilePath 'cmd.exe' -ArgumentList @('/c', 'echo hello') -Description 'Test command' -Confirm:$false
 
                 $result | Should -Not -BeNullOrEmpty
@@ -467,10 +465,11 @@ Describe 'Start-RepairPipeline' {
 
         It 'Continues past failures when -ContinueOnError is set' {
             InModuleScope 'Repair-WindowsImage' {
-                $callCount = 0
+                # Use a global variable to track call count across mock invocations
+                $global:_testCallCount = 0
                 Mock Invoke-ExternalCommand {
-                    $script:callCount++
-                    if ($script:callCount -eq 1) {
+                    $global:_testCallCount++
+                    if ($global:_testCallCount -eq 1) {
                         return [PSCustomObject]@{
                             ExitCode = 1; Success = $false; Output = 'failed'
                             Command = 'mock'; Duration = [TimeSpan]::Zero
@@ -482,11 +481,15 @@ Describe 'Start-RepairPipeline' {
                     }
                 }
 
-                $result = Start-RepairPipeline -ContinueOnError -Confirm:$false
+                try {
+                    $result = Start-RepairPipeline -ContinueOnError -Confirm:$false
 
-                # All 4 steps should have run despite first step failing
-                $result.Steps.Count | Should -Be 4
-                $result.OverallSuccess | Should -BeFalse
+                    # All 4 steps should have run despite first step failing
+                    $result.Steps.Count | Should -Be 4
+                    $result.OverallSuccess | Should -BeFalse
+                } finally {
+                    Remove-Variable -Name '_testCallCount' -Scope Global -ErrorAction SilentlyContinue
+                }
             }
         }
 

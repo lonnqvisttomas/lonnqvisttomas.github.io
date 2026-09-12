@@ -190,11 +190,10 @@ Describe 'Copy-InstallationFiles' {
 
         It 'Uses a SuccessPredicate where exit codes 0-7 are success and 8+ are failure' {
             InModuleScope 'Write-BootableMedia' {
-                # Capture the SuccessPredicate passed to Invoke-ExternalCommand
-                $capturedPredicate = $null
+                # Capture the SuccessPredicate via a global variable to cross scope boundaries
+                $global:_testCapturedPredicate = $null
                 Mock Invoke-ExternalCommand {
-                    # Store the predicate for verification
-                    Set-Variable -Name 'capturedPredicate' -Value $SuccessPredicate -Scope 1
+                    $global:_testCapturedPredicate = $SuccessPredicate
                     return [PSCustomObject]@{
                         ExitCode = 0; Success = $true; Output = 'mock output'
                         Command = 'mock'; Duration = [TimeSpan]::Zero
@@ -203,14 +202,20 @@ Describe 'Copy-InstallationFiles' {
 
                 Copy-InstallationFiles -SourcePath 'C:\Source' -DestinationPath 'E:\' -Confirm:$false
 
-                # Verify the predicate considers 0-7 as success
-                (& $capturedPredicate 0) | Should -BeTrue
-                (& $capturedPredicate 1) | Should -BeTrue
-                (& $capturedPredicate 7) | Should -BeTrue
+                try {
+                    $global:_testCapturedPredicate | Should -Not -BeNullOrEmpty
 
-                # Verify the predicate considers 8+ as failure
-                (& $capturedPredicate 8) | Should -BeFalse
-                (& $capturedPredicate 16) | Should -BeFalse
+                    # Verify the predicate considers 0-7 as success
+                    (& $global:_testCapturedPredicate 0) | Should -BeTrue
+                    (& $global:_testCapturedPredicate 1) | Should -BeTrue
+                    (& $global:_testCapturedPredicate 7) | Should -BeTrue
+
+                    # Verify the predicate considers 8+ as failure
+                    (& $global:_testCapturedPredicate 8) | Should -BeFalse
+                    (& $global:_testCapturedPredicate 16) | Should -BeFalse
+                } finally {
+                    Remove-Variable -Name '_testCapturedPredicate' -Scope Global -ErrorAction SilentlyContinue
+                }
             }
         }
     }

@@ -165,12 +165,12 @@ function Invoke-ExternalCommand {
         $output = $_.Exception.Message
     }
 
-    $exitCode = $LASTEXITCODE
-    # Guard against $null exit code (can happen if the call operator doesn't
-    # set $LASTEXITCODE, e.g. when the executable is not found)
-    if ($null -eq $exitCode) {
-        $exitCode = -1
-    }
+    # Guard against $LASTEXITCODE not being set (can happen when the call
+    # operator does not invoke a native executable, e.g. in mocked tests or
+    # when the executable is not found).  Use Get-Variable to avoid a
+    # StrictMode violation.
+    $exitCodeVar = Get-Variable -Name 'LASTEXITCODE' -Scope Global -ErrorAction SilentlyContinue
+    $exitCode = if ($null -ne $exitCodeVar -and $null -ne $exitCodeVar.Value) { $exitCodeVar.Value } else { -1 }
 
     $endTime = Get-Date
     $duration = $endTime - $startTime

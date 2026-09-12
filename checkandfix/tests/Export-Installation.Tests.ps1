@@ -44,7 +44,9 @@ Describe 'Export-ToUSB' {
             InModuleScope 'Export-Installation' {
                 Mock Confirm-DriveSelection { return $true }
 
-                Mock New-DiskpartScript { return 'C:\Temp\mock-diskpart.txt' }
+                # Return a real temp file so Invoke-Diskpart ValidateScript passes
+                $tempFile = [System.IO.Path]::GetTempFileName()
+                Mock New-DiskpartScript { return $tempFile }
 
                 Mock Invoke-Diskpart {
                     return [PSCustomObject]@{
@@ -67,17 +69,23 @@ Describe 'Export-ToUSB' {
                     }
                 }
 
-                $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -SourcePath 'C:\' -Confirm:$false
+                try {
+                    $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -SourcePath 'C:\' -Confirm:$false
 
-                $result.Success | Should -BeTrue
-                $result.ExportTarget | Should -Be 'USB'
-                $result.Steps.Count | Should -Be 4
+                    $result.Success | Should -BeTrue
+                    $result.ExportTarget | Should -Be 'USB'
+                    $result.Steps.Count | Should -Be 4
 
-                Should -Invoke Confirm-DriveSelection -Times 1
-                Should -Invoke New-DiskpartScript -Times 1
-                Should -Invoke Invoke-Diskpart -Times 1
-                Should -Invoke Copy-InstallationFiles -Times 1
-                Should -Invoke Set-BootConfiguration -Times 1
+                    Should -Invoke Confirm-DriveSelection -Times 1
+                    Should -Invoke New-DiskpartScript -Times 1
+                    Should -Invoke Invoke-Diskpart -Times 1
+                    Should -Invoke Copy-InstallationFiles -Times 1
+                    Should -Invoke Set-BootConfiguration -Times 1
+                } finally {
+                    if (Test-Path -LiteralPath $tempFile) {
+                        Remove-Item -LiteralPath $tempFile -Force -ErrorAction SilentlyContinue
+                    }
+                }
             }
         }
     }
@@ -114,7 +122,8 @@ Describe 'Export-ToUSB' {
             InModuleScope 'Export-Installation' {
                 Mock Confirm-DriveSelection { return $true }
 
-                Mock New-DiskpartScript { return 'C:\Temp\mock-diskpart.txt' }
+                $tempFile = [System.IO.Path]::GetTempFileName()
+                Mock New-DiskpartScript { return $tempFile }
 
                 Mock Invoke-Diskpart {
                     return [PSCustomObject]@{
@@ -126,13 +135,19 @@ Describe 'Export-ToUSB' {
                 Mock Copy-InstallationFiles {}
                 Mock Set-BootConfiguration {}
 
-                $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -SourcePath 'C:\' -Confirm:$false
+                try {
+                    $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -SourcePath 'C:\' -Confirm:$false
 
-                $result.Success | Should -BeFalse
-                $result.Steps.Count | Should -Be 2
+                    $result.Success | Should -BeFalse
+                    $result.Steps.Count | Should -Be 2
 
-                Should -Invoke Copy-InstallationFiles -Times 0
-                Should -Invoke Set-BootConfiguration -Times 0
+                    Should -Invoke Copy-InstallationFiles -Times 0
+                    Should -Invoke Set-BootConfiguration -Times 0
+                } finally {
+                    if (Test-Path -LiteralPath $tempFile) {
+                        Remove-Item -LiteralPath $tempFile -Force -ErrorAction SilentlyContinue
+                    }
+                }
             }
         }
     }
@@ -143,7 +158,8 @@ Describe 'Export-ToUSB' {
             InModuleScope 'Export-Installation' {
                 Mock Confirm-DriveSelection { return $true }
 
-                Mock New-DiskpartScript { return 'C:\Temp\mock-diskpart.txt' }
+                $tempFile = [System.IO.Path]::GetTempFileName()
+                Mock New-DiskpartScript { return $tempFile }
 
                 Mock Invoke-Diskpart {
                     return [PSCustomObject]@{
@@ -161,12 +177,18 @@ Describe 'Export-ToUSB' {
 
                 Mock Set-BootConfiguration {}
 
-                $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -SourcePath 'C:\' -Confirm:$false
+                try {
+                    $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -SourcePath 'C:\' -Confirm:$false
 
-                $result.Success | Should -BeFalse
-                $result.Steps.Count | Should -Be 3
+                    $result.Success | Should -BeFalse
+                    $result.Steps.Count | Should -Be 3
 
-                Should -Invoke Set-BootConfiguration -Times 0
+                    Should -Invoke Set-BootConfiguration -Times 0
+                } finally {
+                    if (Test-Path -LiteralPath $tempFile) {
+                        Remove-Item -LiteralPath $tempFile -Force -ErrorAction SilentlyContinue
+                    }
+                }
             }
         }
     }
@@ -176,7 +198,10 @@ Describe 'Export-ToUSB' {
         It 'Returns result with expected properties' {
             InModuleScope 'Export-Installation' {
                 Mock Confirm-DriveSelection { return $true }
-                Mock New-DiskpartScript { return 'C:\Temp\mock-diskpart.txt' }
+
+                $tempFile = [System.IO.Path]::GetTempFileName()
+                Mock New-DiskpartScript { return $tempFile }
+
                 Mock Invoke-Diskpart {
                     return [PSCustomObject]@{
                         ExitCode = 0; Success = $true; Output = 'ok'
@@ -196,14 +221,20 @@ Describe 'Export-ToUSB' {
                     }
                 }
 
-                $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -Confirm:$false
+                try {
+                    $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -Confirm:$false
 
-                $result.PSObject.Properties.Name | Should -Contain 'Success'
-                $result.PSObject.Properties.Name | Should -Contain 'Steps'
-                $result.PSObject.Properties.Name | Should -Contain 'ExportTarget'
-                $result.PSObject.Properties.Name | Should -Contain 'StartTime'
-                $result.PSObject.Properties.Name | Should -Contain 'EndTime'
-                $result.PSObject.Properties.Name | Should -Contain 'Duration'
+                    $result.PSObject.Properties.Name | Should -Contain 'Success'
+                    $result.PSObject.Properties.Name | Should -Contain 'Steps'
+                    $result.PSObject.Properties.Name | Should -Contain 'ExportTarget'
+                    $result.PSObject.Properties.Name | Should -Contain 'StartTime'
+                    $result.PSObject.Properties.Name | Should -Contain 'EndTime'
+                    $result.PSObject.Properties.Name | Should -Contain 'Duration'
+                } finally {
+                    if (Test-Path -LiteralPath $tempFile) {
+                        Remove-Item -LiteralPath $tempFile -Force -ErrorAction SilentlyContinue
+                    }
+                }
             }
         }
     }
@@ -236,7 +267,9 @@ Describe 'Export-ToISO' {
                     }
                 }
 
-                $result = Export-ToISO -SourcePath 'D:\WinInstall' -OutputPath 'E:\backup.iso' -Confirm:$false
+                # Use C:\ paths that exist as drives to avoid DriveNotFoundException from Split-Path
+                $outputPath = Join-Path -Path $env:TEMP -ChildPath 'test-backup.iso'
+                $result = Export-ToISO -SourcePath 'C:\WinInstall' -OutputPath $outputPath -Confirm:$false
 
                 $result.Success | Should -BeTrue
                 $result.ExportTarget | Should -Be 'ISO'
@@ -294,7 +327,8 @@ Describe 'Export-ToISO' {
                     }
                 }
 
-                $result = Export-ToISO -SourcePath 'C:\' -OutputPath 'D:\test.iso' -Confirm:$false
+                $isoOutputPath = Join-Path -Path $env:TEMP -ChildPath 'test.iso'
+                $result = Export-ToISO -SourcePath 'C:\' -OutputPath $isoOutputPath -Confirm:$false
 
                 $result.PSObject.Properties.Name | Should -Contain 'Success'
                 $result.PSObject.Properties.Name | Should -Contain 'OutputPath'
