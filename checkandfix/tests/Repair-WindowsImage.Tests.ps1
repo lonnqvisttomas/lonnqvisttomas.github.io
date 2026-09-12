@@ -3,6 +3,7 @@
 # Repair-WindowsImage.Tests.ps1 — Pester 5.x tests for Repair-WindowsImage.psm1
 
 BeforeAll {
+    . (Join-Path -Path $PSScriptRoot -ChildPath 'TestHelpers.ps1')
     $modulePath = Join-Path -Path $PSScriptRoot -ChildPath '..\src\Repair-WindowsImage.psm1'
     Import-Module -Name $modulePath -Force
 }
@@ -297,10 +298,7 @@ Describe 'Invoke-DISMRestoreHealth' {
         It 'Appends /Source:<path> to the argument list' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 Invoke-DISMRestoreHealth -Source 'D:\sources\install.wim' -Confirm:$false
@@ -317,10 +315,7 @@ Describe 'Invoke-DISMRestoreHealth' {
         It 'Appends /LimitAccess to the argument list' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 Invoke-DISMRestoreHealth -LimitAccess -Confirm:$false
@@ -337,10 +332,7 @@ Describe 'Invoke-DISMRestoreHealth' {
         It 'Appends both /Source:<path> and /LimitAccess to the argument list' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 Invoke-DISMRestoreHealth -Source 'C:\repair' -LimitAccess -Confirm:$false
@@ -401,10 +393,7 @@ Describe 'Start-RepairPipeline' {
         It 'Runs all four steps in sequence' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 $result = Start-RepairPipeline -Confirm:$false
@@ -424,10 +413,7 @@ Describe 'Start-RepairPipeline' {
         It 'Skips all three DISM steps when -SkipDISM is set' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 $result = Start-RepairPipeline -SkipDISM -Confirm:$false
@@ -444,10 +430,7 @@ Describe 'Start-RepairPipeline' {
         It 'Skips the SFC step when -SkipSFC is set' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 $result = Start-RepairPipeline -SkipSFC -Confirm:$false

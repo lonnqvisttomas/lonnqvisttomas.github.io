@@ -3,6 +3,7 @@
 # Export-Installation.Tests.ps1 — Pester 5.x tests for Export-Installation.psm1
 
 BeforeAll {
+    . (Join-Path -Path $PSScriptRoot -ChildPath 'TestHelpers.ps1')
     # Import all dependent modules in the correct order
     $repairModulePath = Join-Path -Path $PSScriptRoot -ChildPath '..\src\Repair-WindowsImage.psm1'
     Import-Module -Name $repairModulePath -Force
@@ -49,24 +50,15 @@ Describe 'Export-ToUSB' {
                 Mock New-DiskpartScript { return $tempFile }
 
                 Mock Invoke-Diskpart {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'mock')
                 }
 
                 Mock Copy-InstallationFiles {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'mock')
                 }
 
                 Mock Set-BootConfiguration {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'mock')
                 }
 
                 try {
@@ -126,10 +118,7 @@ Describe 'Export-ToUSB' {
                 Mock New-DiskpartScript { return $tempFile }
 
                 Mock Invoke-Diskpart {
-                    return [PSCustomObject]@{
-                        ExitCode = 1; Success = $false; Output = 'diskpart failed'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'diskpart failed')
                 }
 
                 Mock Copy-InstallationFiles {}
@@ -162,17 +151,11 @@ Describe 'Export-ToUSB' {
                 Mock New-DiskpartScript { return $tempFile }
 
                 Mock Invoke-Diskpart {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
 
                 Mock Copy-InstallationFiles {
-                    return [PSCustomObject]@{
-                        ExitCode = 8; Success = $false; Output = 'copy failed'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -ExitCode 8 -Success $false -Output 'copy failed')
                 }
 
                 Mock Set-BootConfiguration {}
@@ -203,22 +186,13 @@ Describe 'Export-ToUSB' {
                 Mock New-DiskpartScript { return $tempFile }
 
                 Mock Invoke-Diskpart {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
                 Mock Copy-InstallationFiles {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
                 Mock Set-BootConfiguration {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
 
                 try {
@@ -261,10 +235,7 @@ Describe 'Export-ToISO' {
                 Mock Test-Path { return $true } -ParameterFilter { $PathType -eq 'Container' }
 
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'iso created'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'iso created')
                 }
 
                 # Use C:\ paths that exist as drives to avoid DriveNotFoundException from Split-Path
@@ -321,10 +292,7 @@ Describe 'Export-ToISO' {
                 Mock Find-Oscdimg { return 'C:\ADK\oscdimg.exe' }
                 Mock Test-Path { return $true } -ParameterFilter { $PathType -eq 'Container' }
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
 
                 $isoOutputPath = Join-Path -Path $env:TEMP -ChildPath 'test.iso'

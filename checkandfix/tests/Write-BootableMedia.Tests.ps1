@@ -3,6 +3,7 @@
 # Write-BootableMedia.Tests.ps1 — Pester 5.x tests for Write-BootableMedia.psm1
 
 BeforeAll {
+    . (Join-Path -Path $PSScriptRoot -ChildPath 'TestHelpers.ps1')
     # Import Repair-WindowsImage first since Write-BootableMedia depends on its functions
     $repairModulePath = Join-Path -Path $PSScriptRoot -ChildPath '..\src\Repair-WindowsImage.psm1'
     Import-Module -Name $repairModulePath -Force
@@ -106,10 +107,7 @@ Describe 'Invoke-Diskpart' {
                 $tempScript = [System.IO.Path]::GetTempFileName()
 
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = "diskpart /s $tempScript"; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Command "diskpart /s $tempScript")
                 }
 
                 # Mock Remove-Item to prevent actual cleanup during test
@@ -135,10 +133,7 @@ Describe 'Invoke-Diskpart' {
                 'select disk 0' | Out-File -FilePath $tempScript -Encoding ASCII
 
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 Invoke-Diskpart -ScriptPath $tempScript -Confirm:$false
@@ -166,10 +161,7 @@ Describe 'Copy-InstallationFiles' {
         It 'Calls Invoke-ExternalCommand with robocopy and correct arguments' {
             InModuleScope 'Write-BootableMedia' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 $result = Copy-InstallationFiles -SourcePath 'C:\Source' -DestinationPath 'E:\' -Confirm:$false
@@ -194,10 +186,7 @@ Describe 'Copy-InstallationFiles' {
                 $global:_testCapturedPredicate = $null
                 Mock Invoke-ExternalCommand {
                     $global:_testCapturedPredicate = $SuccessPredicate
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 Copy-InstallationFiles -SourcePath 'C:\Source' -DestinationPath 'E:\' -Confirm:$false
@@ -237,10 +226,7 @@ Describe 'Set-BootConfiguration' {
         It 'Calls Invoke-ExternalCommand with bcdboot and correct arguments' {
             InModuleScope 'Write-BootableMedia' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult)
                 }
 
                 $expectedWindowsPath = Join-Path -Path 'C:\' -ChildPath 'Windows'
