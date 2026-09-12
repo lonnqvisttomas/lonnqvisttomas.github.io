@@ -88,11 +88,6 @@ Describe 'New-DiskpartScript' {
     }
 }
 
-function Set-WriteHostMocks {
-    Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
-    Mock Write-Host {} -ModuleName 'Write-BootableMedia'
-}
-
 # ============================================================================
 # Invoke-Diskpart
 # ============================================================================
@@ -100,7 +95,8 @@ function Set-WriteHostMocks {
 Describe 'Invoke-Diskpart' {
 
     BeforeEach {
-        Set-WriteHostMocks
+        Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
+        Mock Write-Host {} -ModuleName 'Write-BootableMedia'
     }
 
     Context 'Invocation and cleanup' {
@@ -156,7 +152,8 @@ Describe 'Invoke-Diskpart' {
 Describe 'Copy-InstallationFiles' {
 
     BeforeEach {
-        Set-WriteHostMocks
+        Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
+        Mock Write-Host {} -ModuleName 'Write-BootableMedia'
     }
 
     Context 'Robocopy invocation' {
@@ -220,7 +217,8 @@ Describe 'Copy-InstallationFiles' {
 Describe 'Set-BootConfiguration' {
 
     BeforeEach {
-        Set-WriteHostMocks
+        Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
+        Mock Write-Host {} -ModuleName 'Write-BootableMedia'
     }
 
     Context 'Bcdboot invocation' {
@@ -295,7 +293,8 @@ Describe 'Find-Oscdimg' {
 Describe 'Confirm-DriveSelection' {
 
     BeforeEach {
-        Set-WriteHostMocks
+        Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
+        Mock Write-Host {} -ModuleName 'Write-BootableMedia'
     }
 
     Context 'ShouldProcess integration' {

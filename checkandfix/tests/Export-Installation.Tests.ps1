@@ -27,12 +27,6 @@ AfterAll {
     }
 }
 
-function Set-WriteHostMocks {
-    Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
-    Mock Write-Host {} -ModuleName 'Write-BootableMedia'
-    Mock Write-Host {} -ModuleName 'Export-Installation'
-}
-
 # ============================================================================
 # Export-ToUSB
 # ============================================================================
@@ -40,7 +34,9 @@ function Set-WriteHostMocks {
 Describe 'Export-ToUSB' {
 
     BeforeEach {
-        Set-WriteHostMocks
+        Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
+        Mock Write-Host {} -ModuleName 'Write-BootableMedia'
+        Mock Write-Host {} -ModuleName 'Export-Installation'
     }
 
     Context 'Full success path — all steps succeed' {
@@ -260,7 +256,9 @@ Describe 'Export-ToUSB' {
 Describe 'Export-ToISO' {
 
     BeforeEach {
-        Set-WriteHostMocks
+        Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
+        Mock Write-Host {} -ModuleName 'Write-BootableMedia'
+        Mock Write-Host {} -ModuleName 'Export-Installation'
     }
 
     Context 'oscdimg found — successful ISO creation' {
@@ -374,7 +372,9 @@ Describe 'Export-ToISO' {
 Describe 'Start-ExportPipeline' {
 
     BeforeEach {
-        Set-WriteHostMocks
+        Mock Write-Host {} -ModuleName 'Repair-WindowsImage'
+        Mock Write-Host {} -ModuleName 'Write-BootableMedia'
+        Mock Write-Host {} -ModuleName 'Export-Installation'
     }
 
     Context 'USB routing' {
