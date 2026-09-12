@@ -359,8 +359,8 @@ function Export-ToISO {
         '-u2'
         '-udfver102'
         "-bootdata:$bootdataValue"
-        "`"$SourcePath`""
-        "`"$OutputPath`""
+        $SourcePath
+        $OutputPath
     )
 
     $oscdimgResult = Invoke-ExternalCommand `
