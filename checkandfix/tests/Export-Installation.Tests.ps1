@@ -180,6 +180,41 @@ Describe 'Export-ToUSB' {
         }
     }
 
+    Context 'Abort when Set-BootConfiguration (bcdboot) fails' {
+
+        It 'Returns failure with 4 steps when boot configuration fails' {
+            InModuleScope 'Export-Installation' {
+                Mock Confirm-DriveSelection { return $true }
+
+                $tempFile = [System.IO.Path]::GetTempFileName()
+                Mock New-DiskpartScript { return $tempFile }
+
+                Mock Invoke-Diskpart {
+                    return (New-MockCommandResult -Output 'ok')
+                }
+                Mock Copy-InstallationFiles {
+                    return (New-MockCommandResult -Output 'ok')
+                }
+                Mock Set-BootConfiguration {
+                    return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'bcdboot failed')
+                }
+
+                try {
+                    $result = Export-ToUSB -DiskNumber 2 -DriveLetter 'E:' -SourcePath 'C:\' -Confirm:$false
+
+                    $result.Success | Should -BeFalse
+                    $result.Steps.Count | Should -Be 4
+
+                    Should -Invoke Set-BootConfiguration -Times 1
+                } finally {
+                    if (Test-Path -LiteralPath $tempFile) {
+                        Remove-Item -LiteralPath $tempFile -Force -ErrorAction SilentlyContinue
+                    }
+                }
+            }
+        }
+    }
+
     Context 'Result structure' {
 
         It 'Returns result with expected properties' {
@@ -269,6 +304,26 @@ Describe 'Export-ToISO' {
                 $result.GuidanceMessage | Should -Not -BeNullOrEmpty
                 $result.GuidanceMessage | Should -Match 'oscdimg.exe was not found'
                 $result.GuidanceMessage | Should -Match 'Windows Assessment and Deployment Kit'
+            }
+        }
+    }
+
+    Context 'oscdimg found — execution failure' {
+
+        It 'Returns Success=$false when oscdimg invocation fails with non-zero exit code' {
+            InModuleScope 'Export-Installation' {
+                Mock Find-Oscdimg { return 'C:\ADK\oscdimg.exe' }
+                Mock Test-Path { return $true } -ParameterFilter { $PathType -eq 'Container' }
+
+                Mock Invoke-ExternalCommand {
+                    return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'oscdimg failed')
+                }
+
+                $outputPath = Join-Path -Path $env:TEMP -ChildPath 'test-fail.iso'
+                $result = Export-ToISO -SourcePath 'C:\WinInstall' -OutputPath $outputPath -Confirm:$false
+
+                $result.Success | Should -BeFalse
+                $result.ExitCode | Should -Be 1
             }
         }
     }
@@ -394,6 +449,14 @@ Describe 'Start-ExportPipeline' {
                 {
                     Start-ExportPipeline -ExportTarget 'USB' -DiskNumber 2 -Confirm:$false
                 } | Should -Throw '*DriveLetter*'
+            }
+        }
+
+        It 'Throws when an invalid ExportTarget value is provided' {
+            InModuleScope 'Export-Installation' {
+                {
+                    Start-ExportPipeline -ExportTarget 'DVD' -Confirm:$false
+                } | Should -Throw
             }
         }
     }
