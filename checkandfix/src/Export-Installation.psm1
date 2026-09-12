@@ -105,7 +105,7 @@ function Export-ToUSB {
     # ------------------------------------------------------------------
     Write-StepResult -Message 'Step 2/4: Preparing USB drive via diskpart' -Status 'Info'
 
-    $scriptPath = New-DiskpartScript -DiskNumber $DiskNumber
+    $scriptPath = New-DiskpartScript -DiskNumber $DiskNumber -DriveLetter $DriveLetter
 
     if ($PSCmdlet.ShouldProcess("Disk $DiskNumber", 'Run diskpart to prepare USB drive')) {
         $diskpartResult = Invoke-Diskpart -ScriptPath $scriptPath

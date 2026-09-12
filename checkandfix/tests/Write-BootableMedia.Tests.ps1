@@ -30,7 +30,7 @@ Describe 'New-DiskpartScript' {
 
         It 'Creates a temp file with correct diskpart commands for given disk number' {
             InModuleScope 'Write-BootableMedia' {
-                $scriptPath = New-DiskpartScript -DiskNumber 3
+                $scriptPath = New-DiskpartScript -DiskNumber 3 -DriveLetter 'E:'
 
                 try {
                     $scriptPath | Should -Not -BeNullOrEmpty
@@ -43,7 +43,7 @@ Describe 'New-DiskpartScript' {
                     $content | Should -Match 'convert gpt'
                     $content | Should -Match 'create partition primary'
                     $content | Should -Match 'format'
-                    $content | Should -Match 'assign'
+                    $content | Should -Match 'assign letter=E'
                 }
                 finally {
                     if (Test-Path -LiteralPath $scriptPath) {
@@ -55,7 +55,7 @@ Describe 'New-DiskpartScript' {
 
         It 'Uses the correct disk number in the select command' {
             InModuleScope 'Write-BootableMedia' {
-                $scriptPath = New-DiskpartScript -DiskNumber 7
+                $scriptPath = New-DiskpartScript -DiskNumber 7 -DriveLetter 'F:'
 
                 try {
                     $content = Get-Content -Path $scriptPath -Raw
@@ -71,7 +71,7 @@ Describe 'New-DiskpartScript' {
 
         It 'Returns the full path to the generated script file' {
             InModuleScope 'Write-BootableMedia' {
-                $scriptPath = New-DiskpartScript -DiskNumber 1
+                $scriptPath = New-DiskpartScript -DiskNumber 1 -DriveLetter 'G:'
 
                 try {
                     $scriptPath | Should -BeOfType [string]

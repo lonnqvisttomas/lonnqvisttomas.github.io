@@ -35,8 +35,12 @@ function New-DiskpartScript {
     .PARAMETER DiskNumber
         The disk number to target (as shown by 'list disk' in diskpart).
 
+    .PARAMETER DriveLetter
+        The drive letter to assign to the partition (e.g., 'E' or 'E:').
+        A trailing colon is stripped automatically.
+
     .EXAMPLE
-        $scriptPath = New-DiskpartScript -DiskNumber 2
+        $scriptPath = New-DiskpartScript -DiskNumber 2 -DriveLetter 'E:'
         # Use $scriptPath with Invoke-Diskpart, then remove the file.
 
     .OUTPUTS
@@ -45,8 +49,13 @@ function New-DiskpartScript {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
-        [int]$DiskNumber
+        [int]$DiskNumber,
+
+        [Parameter(Mandatory = $true, Position = 1)]
+        [string]$DriveLetter
     )
+
+    $letterOnly = $DriveLetter.TrimEnd(':')
 
     # Create a temp file with a .txt extension (diskpart requires a readable text file)
     $basePath = [System.IO.Path]::GetTempFileName()
@@ -65,7 +74,7 @@ function New-DiskpartScript {
         'convert gpt'
         'create partition primary'
         'format fs=fat32 quick label="WININSTALL"'
-        'assign'
+        "assign letter=$letterOnly"
     )
 
     $commands | Out-File -FilePath $scriptPath -Encoding ASCII
