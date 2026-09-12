@@ -27,7 +27,7 @@ function New-DiskpartScript {
           2. Clean the disk
           3. Convert to GPT partition scheme
           4. Create a primary partition
-          5. Format as NTFS (quick) with label "WININSTALL"
+          5. Format as FAT32 (quick) with label "WININSTALL"
           6. Assign a drive letter
 
         The caller is responsible for deleting the temporary file after use.
@@ -64,7 +64,7 @@ function New-DiskpartScript {
         'clean'
         'convert gpt'
         'create partition primary'
-        'format fs=ntfs quick label="WININSTALL"'
+        'format fs=fat32 quick label="WININSTALL"'
         'assign'
     )
 
