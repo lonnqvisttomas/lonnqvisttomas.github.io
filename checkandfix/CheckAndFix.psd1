@@ -15,22 +15,9 @@
     )
 
     FunctionsToExport = @(
-        'Invoke-ExternalCommand',
-        'Write-StepResult',
-        'Invoke-DISMCheckHealth',
-        'Invoke-DISMScanHealth',
-        'Invoke-DISMRestoreHealth',
-        'Invoke-SFCScan',
         'Start-RepairPipeline',
-        'Export-ToUSB',
-        'Export-ToISO',
         'Start-ExportPipeline',
-        'New-DiskpartScript',
-        'Invoke-Diskpart',
-        'Copy-InstallationFiles',
-        'Set-BootConfiguration',
-        'Find-Oscdimg',
-        'Confirm-DriveSelection'
+        'Invoke-ExternalCommand'
     )
 
     CmdletsToExport   = @()
