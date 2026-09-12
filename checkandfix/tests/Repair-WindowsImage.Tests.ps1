@@ -202,10 +202,7 @@ Describe 'Invoke-DISMCheckHealth' {
     It 'Calls Invoke-ExternalCommand with correct DISM CheckHealth arguments' {
         InModuleScope 'Repair-WindowsImage' {
             Mock Invoke-ExternalCommand {
-                return [PSCustomObject]@{
-                    ExitCode = 0; Success = $true; Output = 'mock output'
-                    Command = 'dism.exe /Online /Cleanup-Image /CheckHealth'; Duration = [TimeSpan]::Zero
-                }
+                return (New-MockCommandResult -Command 'dism.exe /Online /Cleanup-Image /CheckHealth')
             }
 
             $result = Invoke-DISMCheckHealth -Confirm:$false
@@ -219,6 +216,19 @@ Describe 'Invoke-DISMCheckHealth' {
             }
 
             $result.Success | Should -BeTrue
+        }
+    }
+
+    It 'Returns failure result when DISM CheckHealth returns non-zero exit code' {
+        InModuleScope 'Repair-WindowsImage' {
+            Mock Invoke-ExternalCommand {
+                return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'check failed')
+            }
+
+            $result = Invoke-DISMCheckHealth -Confirm:$false
+
+            $result.Success | Should -BeFalse
+            $result.ExitCode | Should -Be 1
         }
     }
 }
@@ -236,10 +246,7 @@ Describe 'Invoke-DISMScanHealth' {
     It 'Calls Invoke-ExternalCommand with correct DISM ScanHealth arguments' {
         InModuleScope 'Repair-WindowsImage' {
             Mock Invoke-ExternalCommand {
-                return [PSCustomObject]@{
-                    ExitCode = 0; Success = $true; Output = 'mock output'
-                    Command = 'dism.exe /Online /Cleanup-Image /ScanHealth'; Duration = [TimeSpan]::Zero
-                }
+                return (New-MockCommandResult -Command 'dism.exe /Online /Cleanup-Image /ScanHealth')
             }
 
             $result = Invoke-DISMScanHealth -Confirm:$false
@@ -253,6 +260,19 @@ Describe 'Invoke-DISMScanHealth' {
             }
 
             $result.Success | Should -BeTrue
+        }
+    }
+
+    It 'Returns failure result when DISM ScanHealth returns non-zero exit code' {
+        InModuleScope 'Repair-WindowsImage' {
+            Mock Invoke-ExternalCommand {
+                return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'scan failed')
+            }
+
+            $result = Invoke-DISMScanHealth -Confirm:$false
+
+            $result.Success | Should -BeFalse
+            $result.ExitCode | Should -Be 1
         }
     }
 }
@@ -272,10 +292,7 @@ Describe 'Invoke-DISMRestoreHealth' {
         It 'Calls Invoke-ExternalCommand with base RestoreHealth arguments' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'mock output'
-                        Command = 'dism.exe /Online /Cleanup-Image /RestoreHealth'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Command 'dism.exe /Online /Cleanup-Image /RestoreHealth')
                 }
 
                 $result = Invoke-DISMRestoreHealth -Confirm:$false
@@ -344,6 +361,22 @@ Describe 'Invoke-DISMRestoreHealth' {
             }
         }
     }
+
+    Context 'Failure path' {
+
+        It 'Returns failure result when DISM RestoreHealth returns non-zero exit code' {
+            InModuleScope 'Repair-WindowsImage' {
+                Mock Invoke-ExternalCommand {
+                    return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'restore failed')
+                }
+
+                $result = Invoke-DISMRestoreHealth -Confirm:$false
+
+                $result.Success | Should -BeFalse
+                $result.ExitCode | Should -Be 1
+            }
+        }
+    }
 }
 
 # ============================================================================
@@ -359,10 +392,7 @@ Describe 'Invoke-SFCScan' {
     It 'Calls Invoke-ExternalCommand with sfc and /scannow' {
         InModuleScope 'Repair-WindowsImage' {
             Mock Invoke-ExternalCommand {
-                return [PSCustomObject]@{
-                    ExitCode = 0; Success = $true; Output = 'mock output'
-                    Command = 'sfc /scannow'; Duration = [TimeSpan]::Zero
-                }
+                return (New-MockCommandResult -Command 'sfc /scannow')
             }
 
             $result = Invoke-SFCScan -Confirm:$false
@@ -374,6 +404,19 @@ Describe 'Invoke-SFCScan' {
             }
 
             $result.Success | Should -BeTrue
+        }
+    }
+
+    It 'Returns failure result when SFC returns non-zero exit code' {
+        InModuleScope 'Repair-WindowsImage' {
+            Mock Invoke-ExternalCommand {
+                return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'sfc failed')
+            }
+
+            $result = Invoke-SFCScan -Confirm:$false
+
+            $result.Success | Should -BeFalse
+            $result.ExitCode | Should -Be 1
         }
     }
 }
@@ -453,15 +496,9 @@ Describe 'Start-RepairPipeline' {
                 Mock Invoke-ExternalCommand {
                     $global:_testCallCount++
                     if ($global:_testCallCount -eq 1) {
-                        return [PSCustomObject]@{
-                            ExitCode = 1; Success = $false; Output = 'failed'
-                            Command = 'mock'; Duration = [TimeSpan]::Zero
-                        }
+                        return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'failed')
                     }
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
 
                 try {
@@ -479,10 +516,7 @@ Describe 'Start-RepairPipeline' {
         It 'Stops at first failure without -ContinueOnError' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 1; Success = $false; Output = 'failed'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'failed')
                 }
 
                 $result = Start-RepairPipeline -Confirm:$false
@@ -499,10 +533,7 @@ Describe 'Start-RepairPipeline' {
         It 'Returns structured result with Steps array and OverallSuccess' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
 
                 $result = Start-RepairPipeline -Confirm:$false
@@ -523,19 +554,13 @@ Describe 'Start-RepairPipeline' {
         It 'Passes -Source and -LimitAccess through to Invoke-DISMRestoreHealth' {
             InModuleScope 'Repair-WindowsImage' {
                 Mock Invoke-ExternalCommand {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
 
                 # We need to verify the RestoreHealth call gets Source and LimitAccess.
                 # Mock Invoke-DISMRestoreHealth to capture its parameters.
                 Mock Invoke-DISMRestoreHealth {
-                    return [PSCustomObject]@{
-                        ExitCode = 0; Success = $true; Output = 'ok'
-                        Command = 'mock'; Duration = [TimeSpan]::Zero
-                    }
+                    return (New-MockCommandResult -Output 'ok')
                 }
 
                 Start-RepairPipeline -Source 'D:\repair' -LimitAccess -Confirm:$false
@@ -544,6 +569,22 @@ Describe 'Start-RepairPipeline' {
                     $Source -eq 'D:\repair' -and
                     $LimitAccess -eq $true
                 }
+            }
+        }
+    }
+
+    Context '-WhatIf pass-through' {
+
+        It 'Returns success for all steps under -WhatIf even when mock returns failure' {
+            InModuleScope 'Repair-WindowsImage' {
+                Mock Invoke-ExternalCommand {
+                    return (New-MockCommandResult -ExitCode 1 -Success $false -Output 'would fail')
+                }
+
+                $result = Start-RepairPipeline -WhatIf
+
+                $result.Steps.Count | Should -Be 4
+                $result.OverallSuccess | Should -BeTrue
             }
         }
     }
