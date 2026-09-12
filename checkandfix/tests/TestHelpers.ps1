@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 
-function New-MockCommandResult {
+function global:New-MockCommandResult {
     param(
         [int]$ExitCode = 0,
         [bool]$Success = $true,
