@@ -44,7 +44,7 @@ function Write-RegistryValue {
         PSCustomObject with Success (bool) and Action (string: Set, Remove,
         Skip).
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Path,
@@ -65,7 +65,9 @@ function Write-RegistryValue {
             if (Test-Path -Path $Path) {
                 $existing = Get-ItemProperty -Path $Path -Name $ValueName -ErrorAction SilentlyContinue
                 if ($null -ne $existing) {
-                    Remove-ItemProperty -Path $Path -Name $ValueName -Force -ErrorAction Stop
+                    if ($PSCmdlet.ShouldProcess("$Path -> $ValueName", 'Remove registry value')) {
+                        Remove-ItemProperty -Path $Path -Name $ValueName -Force -ErrorAction Stop
+                    }
                     return [PSCustomObject]@{ Success = $true; Action = 'Remove' }
                 }
             }
@@ -74,20 +76,28 @@ function Write-RegistryValue {
 
         # Ensure the parent key exists.
         if (-not (Test-Path -Path $Path)) {
-            $null = New-Item -Path $Path -Force
+            if ($PSCmdlet.ShouldProcess($Path, 'Create registry key')) {
+                $null = New-Item -Path $Path -Force
+            }
         }
 
         # Map the type string to the RegistryValueKind used by
         # Set-ItemProperty / New-ItemProperty.
         switch ($Type) {
             'DWord' {
-                Set-ItemProperty -Path $Path -Name $ValueName -Value ([int]$Value) -Type DWord -Force
+                if ($PSCmdlet.ShouldProcess("$Path\$ValueName", "Set to $Value (DWord)")) {
+                    Set-ItemProperty -Path $Path -Name $ValueName -Value ([int]$Value) -Type DWord -Force
+                }
             }
             'String' {
-                Set-ItemProperty -Path $Path -Name $ValueName -Value ([string]$Value) -Type String -Force
+                if ($PSCmdlet.ShouldProcess("$Path\$ValueName", "Set to $Value (String)")) {
+                    Set-ItemProperty -Path $Path -Name $ValueName -Value ([string]$Value) -Type String -Force
+                }
             }
             'ExpandString' {
-                Set-ItemProperty -Path $Path -Name $ValueName -Value ([string]$Value) -Type ExpandString -Force
+                if ($PSCmdlet.ShouldProcess("$Path\$ValueName", "Set to $Value (ExpandString)")) {
+                    Set-ItemProperty -Path $Path -Name $ValueName -Value ([string]$Value) -Type ExpandString -Force
+                }
             }
             'Binary' {
                 # Value arrives as a hashtable with _type=Binary and Value=base64.
@@ -105,11 +115,15 @@ function Write-RegistryValue {
                     # Already a byte array (unlikely from JSON, but defensive).
                     $bytes = [byte[]]$Value
                 }
-                Set-ItemProperty -Path $Path -Name $ValueName -Value $bytes -Type Binary -Force
+                if ($PSCmdlet.ShouldProcess("$Path\$ValueName", 'Set Binary value')) {
+                    Set-ItemProperty -Path $Path -Name $ValueName -Value $bytes -Type Binary -Force
+                }
             }
             default {
-                # Treat unknown types as String.
-                Set-ItemProperty -Path $Path -Name $ValueName -Value ([string]$Value) -Type String -Force
+                if ($PSCmdlet.ShouldProcess("$Path\$ValueName", "Set to $Value (String)")) {
+                    # Treat unknown types as String.
+                    Set-ItemProperty -Path $Path -Name $ValueName -Value ([string]$Value) -Type String -Force
+                }
             }
         }
 
