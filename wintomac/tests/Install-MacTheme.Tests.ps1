@@ -19,6 +19,7 @@ BeforeAll {
     function Set-Wallpaper { }
     function Set-CursorScheme { }
     function Set-StartMenuConfig { }
+    function Invoke-ExplorerRestart { }
 }
 
 AfterAll {
@@ -52,6 +53,7 @@ Describe 'Install-MacTheme idempotency' {
         Mock Set-StartMenuConfig { [PSCustomObject]@{ Success = $true } }
 
         # Mock Explorer restart commands
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}
@@ -123,6 +125,7 @@ Describe 'Install-MacTheme skip switches' {
         Mock Set-Wallpaper       { [PSCustomObject]@{ Success = $true } }
         Mock Set-CursorScheme    { [PSCustomObject]@{ Success = $true } }
         Mock Set-StartMenuConfig { [PSCustomObject]@{ Success = $true } }
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}
@@ -177,6 +180,7 @@ Describe 'Install-MacTheme WhatIf mode' {
         Mock Set-Wallpaper       { [PSCustomObject]@{ Success = $true } }
         Mock Set-CursorScheme    { [PSCustomObject]@{ Success = $true } }
         Mock Set-StartMenuConfig { [PSCustomObject]@{ Success = $true } }
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}
@@ -207,6 +211,7 @@ Describe 'Install-MacTheme parameter validation' {
         Mock Set-Wallpaper       { [PSCustomObject]@{ Success = $true } }
         Mock Set-CursorScheme    { [PSCustomObject]@{ Success = $true } }
         Mock Set-StartMenuConfig { [PSCustomObject]@{ Success = $true } }
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}
@@ -334,6 +339,7 @@ Describe 'Install-MacTheme result structure' {
         Mock Set-Wallpaper       { [PSCustomObject]@{ Success = $true } }
         Mock Set-CursorScheme    { [PSCustomObject]@{ Success = $true } }
         Mock Set-StartMenuConfig { [PSCustomObject]@{ Success = $true } }
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}

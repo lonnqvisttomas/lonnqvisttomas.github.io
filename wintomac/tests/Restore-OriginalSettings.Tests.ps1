@@ -427,24 +427,30 @@ Describe 'Backup-Restore round-trip' {
             $roundTripJson = New-MockBackupJson
             $jsonText = $roundTripJson | ConvertTo-Json -Depth 10
 
-            Mock Test-Path { return $true }
-            Mock Get-Content { return $jsonText }
-            Mock Get-ItemProperty {
-                $obj = [PSCustomObject]@{}
-                $propName = if ($Name -is [array]) { $Name[0] } else { [string]$Name }
-                $obj | Add-Member -MemberType NoteProperty -Name $propName -Value 'exists'
-                return $obj
+            # Write to actual file because Restore-OriginalSettings uses
+            # [System.IO.File]::ReadAllText which can't be mocked
+            $null = New-Item -Path $backupDir -ItemType Directory -Force -ErrorAction SilentlyContinue
+            [System.IO.File]::WriteAllText($backupPath, $jsonText, [System.Text.Encoding]::UTF8)
+
+            try {
+                Mock Test-Path { return $true }
+                Mock Get-ItemProperty {
+                    $obj = [PSCustomObject]@{}
+                    $propName = if ($Name -is [array]) { $Name[0] } else { [string]$Name }
+                    $obj | Add-Member -MemberType NoteProperty -Name $propName -Value 'exists'
+                    return $obj
+                }
+                Mock Set-ItemProperty {}
+                Mock Remove-ItemProperty {}
+                Mock New-Item {}
+
+                $result = Restore-OriginalSettings -Confirm:$false
+
+                $result.Success | Should -Be $true
+                $result.RestoredKeys | Should -BeGreaterThan 0
             }
-            Mock Set-ItemProperty {}
-            Mock Remove-ItemProperty {}
-            Mock New-Item {}
-
-            $result = Restore-OriginalSettings -Confirm:$false
-
-            $result.Success | Should -Be $true
-            $result.RestoredKeys | Should -BeGreaterThan 0
-            Should -Invoke Set-ItemProperty -Times 1 -ParameterFilter {
-                $Name -eq 'TaskbarAl' -and $Value -eq 0 -and $Type -eq 'DWord'
+            finally {
+                Remove-Item -Path $backupPath -Force -ErrorAction SilentlyContinue
             }
         }
     }

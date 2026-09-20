@@ -209,7 +209,7 @@ Describe 'Set-TaskbarConfig' {
                 $result = Set-TaskbarConfig -Confirm:$false
 
                 $result.Warnings.Count | Should -BeGreaterThan 0
-                $result.Warnings | Should -Contain { $_ -like '*StuckRects3*' }
+                $result.Warnings[0] | Should -BeLike '*StuckRects3*'
             }
         }
     }

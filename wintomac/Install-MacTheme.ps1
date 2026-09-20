@@ -113,23 +113,23 @@ if ($ConfigPath) {
         # Config values apply only when the corresponding switch was NOT
         # explicitly supplied on the command line.
         if (-not $PSBoundParameters.ContainsKey('SkipDock') -and
-            $null -ne $config.SkipDock -and $config.SkipDock -eq $true) {
+            $config.PSObject.Properties['SkipDock'] -and $config.SkipDock -eq $true) {
             $SkipDock = [switch]$true
         }
         if (-not $PSBoundParameters.ContainsKey('SkipCursors') -and
-            $null -ne $config.SkipCursors -and $config.SkipCursors -eq $true) {
+            $config.PSObject.Properties['SkipCursors'] -and $config.SkipCursors -eq $true) {
             $SkipCursors = [switch]$true
         }
         if (-not $PSBoundParameters.ContainsKey('SkipWallpaper') -and
-            $null -ne $config.SkipWallpaper -and $config.SkipWallpaper -eq $true) {
+            $config.PSObject.Properties['SkipWallpaper'] -and $config.SkipWallpaper -eq $true) {
             $SkipWallpaper = [switch]$true
         }
         if (-not $PSBoundParameters.ContainsKey('SkipStartMenu') -and
-            $null -ne $config.SkipStartMenu -and $config.SkipStartMenu -eq $true) {
+            $config.PSObject.Properties['SkipStartMenu'] -and $config.SkipStartMenu -eq $true) {
             $SkipStartMenu = [switch]$true
         }
         if (-not $PSBoundParameters.ContainsKey('SkipVisualStyle') -and
-            $null -ne $config.SkipVisualStyle -and $config.SkipVisualStyle -eq $true) {
+            $config.PSObject.Properties['SkipVisualStyle'] -and $config.SkipVisualStyle -eq $true) {
             $SkipVisualStyle = [switch]$true
         }
 

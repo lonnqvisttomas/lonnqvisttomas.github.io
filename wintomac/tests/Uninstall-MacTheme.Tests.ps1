@@ -13,6 +13,7 @@ BeforeAll {
 
     # Define stub functions so they can be mocked (Import-Module is mocked to prevent real loading)
     function Restore-OriginalSettings { }
+    function Invoke-ExplorerRestart { }
 }
 
 AfterAll {
@@ -64,6 +65,7 @@ Describe 'Uninstall-MacTheme successful restore' {
         Mock Restore-OriginalSettings {
             [PSCustomObject]@{ Success = $true; RestoredKeys = 25; Warnings = @() }
         }
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}
@@ -109,6 +111,7 @@ Describe 'Uninstall-MacTheme failed restore' {
         Mock Restore-OriginalSettings {
             [PSCustomObject]@{ Success = $false; Error = 'Restore failed' }
         }
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}
@@ -146,6 +149,7 @@ Describe 'Uninstall-MacTheme WhatIf mode' {
         Mock Restore-OriginalSettings {
             [PSCustomObject]@{ Success = $true; RestoredKeys = 25; Warnings = @() }
         }
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}
@@ -184,6 +188,7 @@ Describe 'Uninstall-MacTheme result structure' {
         Mock Restore-OriginalSettings {
             [PSCustomObject]@{ Success = $true; RestoredKeys = 25; Warnings = @() }
         }
+        Mock Invoke-ExplorerRestart {}
         Mock Stop-Process {}
         Mock Start-Process {}
         Mock Start-Sleep {}
