@@ -304,7 +304,7 @@ else {
 # Explorer restart
 # ---------------------------------------------------------------------------
 
-if (-not $NoRestart) {
+if (-not $NoRestart -and -not $WhatIfPreference) {
     Write-Host ''
     if ($PSCmdlet.ShouldContinue('Restart Explorer to apply changes?', 'Explorer Restart')) {
         Write-Host '[Explorer] Restarting Explorer...' -ForegroundColor Cyan
