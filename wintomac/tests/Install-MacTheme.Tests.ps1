@@ -251,6 +251,72 @@ Describe 'Install-MacTheme parameter validation' {
 }
 
 # ============================================================================
+# ConfigPath JSON merge tests
+# ============================================================================
+
+Describe 'Install-MacTheme ConfigPath JSON merge' {
+
+    BeforeEach {
+        Mock Write-Host {}
+        Mock Import-Module {}
+        Mock Backup-CurrentSettings {
+            [PSCustomObject]@{ Success = $true; Skipped = $false; Message = 'Backup created' }
+        }
+        Mock Set-TaskbarConfig   { [PSCustomObject]@{ Success = $true } }
+        Mock Set-VisualStyle     { [PSCustomObject]@{ Success = $true } }
+        Mock Set-Wallpaper       { [PSCustomObject]@{ Success = $true } }
+        Mock Set-CursorScheme    { [PSCustomObject]@{ Success = $true } }
+        Mock Set-StartMenuConfig { [PSCustomObject]@{ Success = $true } }
+        Mock Invoke-ExplorerRestart {}
+        Mock Stop-Process {}
+        Mock Start-Process {}
+        Mock Start-Sleep {}
+    }
+
+    It 'Skips Dock when config JSON sets SkipDock to true' {
+        $tempConfig = Join-Path -Path $env:TEMP -ChildPath 'wintomac_config_test.json'
+        try {
+            '{"SkipDock": true}' | Set-Content -Path $tempConfig -Encoding UTF8
+
+            Mock Test-Path {
+                if ($Path -like 'HKCU:*' -or $Path -like 'HKLM:*') { return $false }
+                return $true
+            }
+
+            $result = & $script:InstallScript -ConfigPath $tempConfig -NoRestart -Confirm:$false -WhatIf
+
+            Should -Not -Invoke Set-TaskbarConfig
+        }
+        finally {
+            if (Test-Path -LiteralPath $tempConfig) {
+                Remove-Item -LiteralPath $tempConfig -Force
+            }
+        }
+    }
+
+    It 'Command-line switch takes precedence over config JSON' {
+        $tempConfig = Join-Path -Path $env:TEMP -ChildPath 'wintomac_config_precedence.json'
+        try {
+            '{"SkipDock": true}' | Set-Content -Path $tempConfig -Encoding UTF8
+
+            Mock Test-Path {
+                if ($Path -like 'HKCU:*' -or $Path -like 'HKLM:*') { return $false }
+                return $true
+            }
+
+            $result = & $script:InstallScript -ConfigPath $tempConfig -SkipDock:$false -NoRestart -Confirm:$false -WhatIf
+
+            Should -Invoke Set-TaskbarConfig -Times 1
+        }
+        finally {
+            if (Test-Path -LiteralPath $tempConfig) {
+                Remove-Item -LiteralPath $tempConfig -Force
+            }
+        }
+    }
+}
+
+# ============================================================================
 # Result structure test
 # ============================================================================
 
