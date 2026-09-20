@@ -290,3 +290,69 @@ Describe 'Install-MacTheme result structure' {
         $result.OverallSuccess | Should -BeTrue
     }
 }
+
+# ============================================================================
+# Error handling and isolation tests
+# ============================================================================
+
+Describe 'Install-MacTheme error handling and isolation' {
+
+    BeforeEach {
+        Mock Write-Host {}
+        Mock Import-Module {}
+        Mock Test-Path { return $false }
+        Mock Backup-CurrentSettings {
+            [PSCustomObject]@{ Success = $true; Skipped = $false; Message = 'Backup created' }
+        }
+        Mock Set-TaskbarConfig   { [PSCustomObject]@{ Success = $true } }
+        Mock Set-VisualStyle     { [PSCustomObject]@{ Success = $true } }
+        Mock Set-Wallpaper       { [PSCustomObject]@{ Success = $true } }
+        Mock Set-CursorScheme    { [PSCustomObject]@{ Success = $true } }
+        Mock Set-StartMenuConfig { [PSCustomObject]@{ Success = $true } }
+        Mock Invoke-ExplorerRestart {}
+        Mock Stop-Process {}
+        Mock Start-Process {}
+        Mock Start-Sleep {}
+    }
+
+    Context 'When Set-TaskbarConfig throws' {
+        BeforeEach {
+            Mock Set-TaskbarConfig { throw 'Taskbar error' }
+        }
+
+        It 'Sets OverallSuccess to false' {
+            $result = & $script:InstallScript -NoRestart -Confirm:$false -WhatIf
+            $result.OverallSuccess | Should -BeFalse
+        }
+
+        It 'Still executes remaining modules after the failure' {
+            & $script:InstallScript -NoRestart -Confirm:$false -WhatIf
+            Should -Invoke Set-VisualStyle -Times 1
+            Should -Invoke Set-Wallpaper -Times 1
+            Should -Invoke Set-CursorScheme -Times 1
+            Should -Invoke Set-StartMenuConfig -Times 1
+        }
+
+        It 'Records the failed step in Steps' {
+            $result = & $script:InstallScript -NoRestart -Confirm:$false -WhatIf
+            $dockStep = $result.Steps | Where-Object { $_.Name -eq 'Dock' }
+            $dockStep.Success | Should -BeFalse
+        }
+    }
+
+    Context 'When Backup-CurrentSettings throws' {
+        BeforeEach {
+            Mock Backup-CurrentSettings { throw 'Backup failure' }
+        }
+
+        It 'Sets OverallSuccess to false' {
+            $result = & $script:InstallScript -NoRestart -Confirm:$false -WhatIf
+            $result.OverallSuccess | Should -BeFalse
+        }
+
+        It 'Still executes Set-* modules after backup failure' {
+            & $script:InstallScript -NoRestart -Confirm:$false -WhatIf
+            Should -Invoke Set-TaskbarConfig -Times 1
+        }
+    }
+}
