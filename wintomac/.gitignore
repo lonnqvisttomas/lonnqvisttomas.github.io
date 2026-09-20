@@ -1,5 +1,6 @@
 # Test results
 test-results.xml
+coverage.xml
 
 # Transcript logs
 *.transcript.txt
