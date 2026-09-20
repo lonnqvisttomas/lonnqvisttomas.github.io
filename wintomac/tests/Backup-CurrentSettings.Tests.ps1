@@ -311,3 +311,54 @@ Describe 'Backup-CurrentSettings' {
         }
     }
 }
+
+# ============================================================================
+# Coverage gap tests
+# ============================================================================
+
+Describe 'Backup-CurrentSettings coverage gaps' {
+
+    Context 'Binary encode failure path' {
+        It 'Handles non-byte value gracefully for Binary-typed keys' {
+            InModuleScope 'Backup-CurrentSettings' {
+                Mock Test-Path { return $true }
+                Mock Get-ItemProperty {
+                    param($Path, $Name)
+                    $obj = [PSCustomObject]@{}
+                    $propName = if ($Name -is [array]) { $Name[0] } else { [string]$Name }
+                    if ($propName -eq 'Settings' -or $propName -eq 'AccentPalette' -or $propName -eq 'VisiblePlaces') {
+                        $obj | Add-Member -MemberType NoteProperty -Name $propName -Value 'not-a-byte-array'
+                    }
+                    else {
+                        $obj | Add-Member -MemberType NoteProperty -Name $propName -Value 42
+                    }
+                    return $obj
+                }
+
+                $result = Backup-CurrentSettings -Confirm:$false
+
+                $result.Success | Should -Be $true
+            }
+        }
+    }
+
+    Context 'File write error path' {
+        It 'Returns Success=false when ConvertTo-Json throws' {
+            InModuleScope 'Backup-CurrentSettings' {
+                Mock Test-Path { return $true }
+                Mock Get-ItemProperty {
+                    param($Path, $Name)
+                    $obj = [PSCustomObject]@{}
+                    $propName = if ($Name -is [array]) { $Name[0] } else { [string]$Name }
+                    $obj | Add-Member -MemberType NoteProperty -Name $propName -Value 0
+                    return $obj
+                }
+                Mock ConvertTo-Json { throw 'Serialization error' }
+
+                $result = Backup-CurrentSettings -Confirm:$false
+
+                $result.Success | Should -Be $false
+            }
+        }
+    }
+}
