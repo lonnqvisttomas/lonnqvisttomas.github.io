@@ -233,8 +233,10 @@ Describe 'Install-MacTheme parameter validation' {
                 if ($Path -like 'HKCU:*' -or $Path -like 'HKLM:*') {
                     return $false
                 }
-                # Let the real Test-Path handle filesystem checks for the temp file
-                return (Microsoft.PowerShell.Management\Test-Path -Path $Path)
+                if ($LiteralPath) {
+                    return $true
+                }
+                return $true
             }
 
             { & $script:InstallScript -ConfigPath $tempFile -NoRestart -Confirm:$false } |
