@@ -147,6 +147,21 @@ if ($null -ne $restoreResult -and $restoreResult.Success) {
             # Non-fatal — the uninstall still succeeded
         }
     }
+
+    # Also clean up cursor files deployed to LOCALAPPDATA
+    $localAppDataDir = Join-Path -Path $env:LOCALAPPDATA -ChildPath 'WinToMac'
+    if (Test-Path -Path $localAppDataDir) {
+        if ($PSCmdlet.ShouldProcess($localAppDataDir, 'Remove cursor deployment directory')) {
+            try {
+                Write-Host "[Cleanup] Removing cursor directory: $localAppDataDir" -ForegroundColor Cyan
+                Remove-Item -Path $localAppDataDir -Recurse -Force
+                Write-Host '[Cleanup] Cursor directory removed.' -ForegroundColor Green
+            }
+            catch {
+                Write-Host "[Cleanup] Failed to remove cursor directory: $_" -ForegroundColor Yellow
+            }
+        }
+    }
 }
 else {
     Write-Host ''
