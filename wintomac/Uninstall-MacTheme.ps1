@@ -134,7 +134,7 @@ if (-not $NoRestart -and -not $WhatIfPreference) {
 $cleanedUp = $false
 
 if ($null -ne $restoreResult -and $restoreResult.Success) {
-    if (-not $WhatIfPreference) {
+    if ($PSCmdlet.ShouldProcess($backupDir, 'Remove backup directory')) {
         try {
             Write-Host ''
             Write-Host "[Cleanup] Removing backup directory: $backupDir" -ForegroundColor Cyan
@@ -146,10 +146,6 @@ if ($null -ne $restoreResult -and $restoreResult.Success) {
             Write-Host "[Cleanup] Failed to remove backup directory: $_" -ForegroundColor Yellow
             # Non-fatal — the uninstall still succeeded
         }
-    }
-    else {
-        Write-Host ''
-        Write-Host "[Cleanup] What if: Would remove backup directory: $backupDir" -ForegroundColor Yellow
     }
 }
 else {
