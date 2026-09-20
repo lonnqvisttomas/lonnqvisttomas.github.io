@@ -409,3 +409,43 @@ Describe 'Restore-OriginalSettings' {
         }
     }
 }
+
+# ============================================================================
+# Backup-Restore round-trip validation
+# ============================================================================
+
+Describe 'Backup-Restore round-trip' {
+    BeforeAll {
+        . (Join-Path -Path $PSScriptRoot -ChildPath 'TestHelpers.ps1')
+    }
+
+    It 'DWord values survive JSON serialization round-trip' {
+        InModuleScope 'Restore-OriginalSettings' {
+            $backupDir = Join-Path -Path $env:APPDATA -ChildPath 'WinToMac'
+            $backupPath = Join-Path -Path $backupDir -ChildPath 'backup.json'
+
+            $roundTripJson = New-MockBackupJson
+            $jsonText = $roundTripJson | ConvertTo-Json -Depth 10
+
+            Mock Test-Path { return $true }
+            Mock Get-Content { return $jsonText }
+            Mock Get-ItemProperty {
+                $obj = [PSCustomObject]@{}
+                $propName = if ($Name -is [array]) { $Name[0] } else { [string]$Name }
+                $obj | Add-Member -MemberType NoteProperty -Name $propName -Value 'exists'
+                return $obj
+            }
+            Mock Set-ItemProperty {}
+            Mock Remove-ItemProperty {}
+            Mock New-Item {}
+
+            $result = Restore-OriginalSettings -Confirm:$false
+
+            $result.Success | Should -Be $true
+            $result.RestoredKeys | Should -BeGreaterThan 0
+            Should -Invoke Set-ItemProperty -Times 1 -ParameterFilter {
+                $Name -eq 'TaskbarAl' -and $Value -eq 0 -and $Type -eq 'DWord'
+            }
+        }
+    }
+}
