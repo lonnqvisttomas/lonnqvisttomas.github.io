@@ -48,6 +48,7 @@ function Get-BackupKeyManifest {
     $startMenu        = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Start'
     $desktop          = 'HKCU:\Control Panel\Desktop'
     $cursors          = 'HKCU:\Control Panel\Cursors'
+    $hklmCursorSchemes = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Cursors\Schemes'
 
     return @(
         # ---- Taskbar keys ------------------------------------------------
@@ -92,6 +93,9 @@ function Get-BackupKeyManifest {
         @{ Path = $cursors; ValueName = 'SizeAll';      Type = 'ExpandString' }
         @{ Path = $cursors; ValueName = 'UpArrow';      Type = 'ExpandString' }
         @{ Path = $cursors; ValueName = 'Hand';         Type = 'ExpandString' }
+
+        # ---- HKLM cursor scheme registration -----------------------------
+        @{ Path = $hklmCursorSchemes; ValueName = 'WinToMac'; Type = 'String' }
     )
 }
 
