@@ -199,20 +199,21 @@ function Set-CursorScheme {
     # Step 7: Activate the cursor scheme via SystemParametersInfo
     # ------------------------------------------------------------------
     # Only load the type definition if it is not already loaded
-    if ($null -eq ([Type]::GetType('CursorApi'))) {
+    if ($null -eq ([Type]::GetType('Win32Api'))) {
         try {
-            $cursorApiDef = @'
+            $win32ApiDef = @'
 using System;
 using System.Runtime.InteropServices;
-public class CursorApi {
+public class Win32Api {
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, string pvParam, uint fWinIni);
+    public const uint SPI_SETDESKWALLPAPER = 0x0014;
     public const uint SPI_SETCURSORS = 0x0057;
     public const uint SPIF_UPDATEINIFILE = 0x01;
     public const uint SPIF_SENDCHANGE = 0x02;
 }
 '@
-            Add-Type -TypeDefinition $cursorApiDef
+            Add-Type -TypeDefinition $win32ApiDef
         }
         catch {
             # Type may already be loaded from a previous import in the same session
@@ -223,11 +224,11 @@ public class CursorApi {
     }
 
     if ($PSCmdlet.ShouldProcess('System cursors', 'Activate cursor scheme via SystemParametersInfo')) {
-        $spiResult = [CursorApi]::SystemParametersInfo(
-            [CursorApi]::SPI_SETCURSORS,
+        $spiResult = [Win32Api]::SystemParametersInfo(
+            [Win32Api]::SPI_SETCURSORS,
             0,
             $null,
-            [CursorApi]::SPIF_SENDCHANGE
+            [Win32Api]::SPIF_SENDCHANGE
         )
 
         if ($spiResult) {

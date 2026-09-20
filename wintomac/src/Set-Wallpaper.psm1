@@ -113,20 +113,21 @@ function Set-Wallpaper {
     # Step 5: Apply the wallpaper via SystemParametersInfo P/Invoke
     # ------------------------------------------------------------------
     # Only load the type definition if it is not already loaded
-    if ($null -eq ([Type]::GetType('WallpaperApi'))) {
+    if ($null -eq ([Type]::GetType('Win32Api'))) {
         try {
-            $wallpaperApiDef = @'
+            $win32ApiDef = @'
 using System;
 using System.Runtime.InteropServices;
-public class WallpaperApi {
+public class Win32Api {
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, string pvParam, uint fWinIni);
     public const uint SPI_SETDESKWALLPAPER = 0x0014;
+    public const uint SPI_SETCURSORS = 0x0057;
     public const uint SPIF_UPDATEINIFILE = 0x01;
     public const uint SPIF_SENDCHANGE = 0x02;
 }
 '@
-            Add-Type -TypeDefinition $wallpaperApiDef
+            Add-Type -TypeDefinition $win32ApiDef
         }
         catch {
             # Type may already be loaded from a previous import in the same session
@@ -137,11 +138,11 @@ public class WallpaperApi {
     }
 
     if ($PSCmdlet.ShouldProcess($deployedPath, 'Apply wallpaper via SystemParametersInfo')) {
-        $spiResult = [WallpaperApi]::SystemParametersInfo(
-            [WallpaperApi]::SPI_SETDESKWALLPAPER,
+        $spiResult = [Win32Api]::SystemParametersInfo(
+            [Win32Api]::SPI_SETDESKWALLPAPER,
             0,
             $deployedPath,
-            [WallpaperApi]::SPIF_UPDATEINIFILE -bor [WallpaperApi]::SPIF_SENDCHANGE
+            [Win32Api]::SPIF_UPDATEINIFILE -bor [Win32Api]::SPIF_SENDCHANGE
         )
 
         if ($spiResult) {
