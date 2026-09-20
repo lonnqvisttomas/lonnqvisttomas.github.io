@@ -15,7 +15,8 @@
         'src\Set-VisualStyle.psm1',
         'src\Set-Wallpaper.psm1',
         'src\Set-CursorScheme.psm1',
-        'src\Set-StartMenuConfig.psm1'
+        'src\Set-StartMenuConfig.psm1',
+        'src\Invoke-ExplorerRestart.psm1'
     )
 
     FunctionsToExport = @(
@@ -25,7 +26,8 @@
         'Set-VisualStyle',
         'Set-Wallpaper',
         'Set-CursorScheme',
-        'Set-StartMenuConfig'
+        'Set-StartMenuConfig',
+        'Invoke-ExplorerRestart'
     )
 
     CmdletsToExport   = @()
