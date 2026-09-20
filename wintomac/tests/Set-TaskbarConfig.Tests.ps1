@@ -192,6 +192,26 @@ Describe 'Set-TaskbarConfig' {
                 $result.Warnings[0] | Should -BeLike '*too short*'
             }
         }
+
+        It 'Adds warning when Get-ItemProperty throws for StuckRects3' {
+            InModuleScope 'Set-TaskbarConfig' {
+                Mock Test-Path { return $true }
+                Mock Set-ItemProperty {}
+                Mock New-Item {}
+                Mock Get-ItemProperty {
+                    param($Path, $Name)
+                    if ($Name -eq 'Settings') {
+                        throw 'Access denied'
+                    }
+                    return $null
+                }
+
+                $result = Set-TaskbarConfig -Confirm:$false
+
+                $result.Warnings.Count | Should -BeGreaterThan 0
+                $result.Warnings | Should -Contain { $_ -like '*StuckRects3*' }
+            }
+        }
     }
 
     Context 'WhatIf mode makes no changes' {
