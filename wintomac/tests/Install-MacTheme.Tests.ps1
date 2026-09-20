@@ -10,6 +10,15 @@ BeforeAll {
     # Ensure the WinToMac AppData directory exists for backup-path tests
     $script:backupDir = Join-Path -Path $env:APPDATA -ChildPath 'WinToMac'
     $script:backupPath = Join-Path -Path $script:backupDir -ChildPath 'backup.json'
+
+    # Define stub functions so they can be mocked (Import-Module is mocked to prevent real loading)
+    function Backup-CurrentSettings { }
+    function Restore-OriginalSettings { }
+    function Set-TaskbarConfig { }
+    function Set-VisualStyle { }
+    function Set-Wallpaper { }
+    function Set-CursorScheme { }
+    function Set-StartMenuConfig { }
 }
 
 AfterAll {

@@ -10,6 +10,9 @@ BeforeAll {
     # Track the expected backup paths for assertions
     $script:backupDir = Join-Path -Path $env:APPDATA -ChildPath 'WinToMac'
     $script:backupPath = Join-Path -Path $script:backupDir -ChildPath 'backup.json'
+
+    # Define stub functions so they can be mocked (Import-Module is mocked to prevent real loading)
+    function Restore-OriginalSettings { }
 }
 
 AfterAll {
