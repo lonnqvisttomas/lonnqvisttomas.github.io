@@ -195,109 +195,34 @@ catch {
 # Apply phases
 # ---------------------------------------------------------------------------
 
-# --- Dock / Taskbar ---
-if (-not $SkipDock) {
-    try {
-        Write-Host ''
-        Write-Host '[Dock] Configuring taskbar as macOS-style dock...' -ForegroundColor Cyan
-        $dockResult = Set-TaskbarConfig -WhatIf:$WhatIfPreference
-        $steps.Add([PSCustomObject]@{ Name = 'Dock'; Success = $true; Result = $dockResult }) | Out-Null
-        Write-Host '[Dock] Dock configuration applied successfully.' -ForegroundColor Green
-    }
-    catch {
-        Write-Host "[Dock] Failed to configure dock: $_" -ForegroundColor Red
-        $steps.Add([PSCustomObject]@{ Name = 'Dock'; Success = $false; Error = $_.Exception.Message }) | Out-Null
-        $overallSuccess = $false
-    }
-}
-else {
-    Write-Host ''
-    Write-Host '[Dock] Skipped (SkipDock specified).' -ForegroundColor Yellow
-    $steps.Add([PSCustomObject]@{ Name = 'Dock'; Success = $true; Skipped = $true }) | Out-Null
-}
+$themeSteps = @(
+    [PSCustomObject]@{ Name = 'Dock';        Skip = [bool]$SkipDock;        Action = { Set-TaskbarConfig -WhatIf:$WhatIfPreference } }
+    [PSCustomObject]@{ Name = 'VisualStyle'; Skip = [bool]$SkipVisualStyle; Action = { Set-VisualStyle -WhatIf:$WhatIfPreference } }
+    [PSCustomObject]@{ Name = 'Wallpaper';   Skip = [bool]$SkipWallpaper;   Action = { Set-Wallpaper -WhatIf:$WhatIfPreference } }
+    [PSCustomObject]@{ Name = 'Cursors';     Skip = [bool]$SkipCursors;     Action = { Set-CursorScheme -WhatIf:$WhatIfPreference } }
+    [PSCustomObject]@{ Name = 'StartMenu';   Skip = [bool]$SkipStartMenu;   Action = { Set-StartMenuConfig -WhatIf:$WhatIfPreference } }
+)
 
-# --- Visual Style ---
-if (-not $SkipVisualStyle) {
-    try {
+foreach ($step in $themeSteps) {
+    if (-not $step.Skip) {
+        try {
+            Write-Host ''
+            Write-Host "[$($step.Name)] Applying $($step.Name) configuration..." -ForegroundColor Cyan
+            $stepResult = & $step.Action
+            $steps.Add([PSCustomObject]@{ Name = $step.Name; Success = $true; Result = $stepResult }) | Out-Null
+            Write-Host "[$($step.Name)] $($step.Name) applied successfully." -ForegroundColor Green
+        }
+        catch {
+            Write-Host "[$($step.Name)] Failed: $_" -ForegroundColor Red
+            $steps.Add([PSCustomObject]@{ Name = $step.Name; Success = $false; Error = $_.Exception.Message }) | Out-Null
+            $overallSuccess = $false
+        }
+    }
+    else {
         Write-Host ''
-        Write-Host '[VisualStyle] Applying macOS visual style...' -ForegroundColor Cyan
-        $vsResult = Set-VisualStyle -WhatIf:$WhatIfPreference
-        $steps.Add([PSCustomObject]@{ Name = 'VisualStyle'; Success = $true; Result = $vsResult }) | Out-Null
-        Write-Host '[VisualStyle] Visual style applied successfully.' -ForegroundColor Green
+        Write-Host "[$($step.Name)] Skipped (Skip$($step.Name) specified)." -ForegroundColor Yellow
+        $steps.Add([PSCustomObject]@{ Name = $step.Name; Success = $true; Skipped = $true }) | Out-Null
     }
-    catch {
-        Write-Host "[VisualStyle] Failed to apply visual style: $_" -ForegroundColor Red
-        $steps.Add([PSCustomObject]@{ Name = 'VisualStyle'; Success = $false; Error = $_.Exception.Message }) | Out-Null
-        $overallSuccess = $false
-    }
-}
-else {
-    Write-Host ''
-    Write-Host '[VisualStyle] Skipped (SkipVisualStyle specified).' -ForegroundColor Yellow
-    $steps.Add([PSCustomObject]@{ Name = 'VisualStyle'; Success = $true; Skipped = $true }) | Out-Null
-}
-
-# --- Wallpaper ---
-if (-not $SkipWallpaper) {
-    try {
-        Write-Host ''
-        Write-Host '[Wallpaper] Setting macOS wallpaper...' -ForegroundColor Cyan
-        $wpResult = Set-Wallpaper -WhatIf:$WhatIfPreference
-        $steps.Add([PSCustomObject]@{ Name = 'Wallpaper'; Success = $true; Result = $wpResult }) | Out-Null
-        Write-Host '[Wallpaper] Wallpaper applied successfully.' -ForegroundColor Green
-    }
-    catch {
-        Write-Host "[Wallpaper] Failed to set wallpaper: $_" -ForegroundColor Red
-        $steps.Add([PSCustomObject]@{ Name = 'Wallpaper'; Success = $false; Error = $_.Exception.Message }) | Out-Null
-        $overallSuccess = $false
-    }
-}
-else {
-    Write-Host ''
-    Write-Host '[Wallpaper] Skipped (SkipWallpaper specified).' -ForegroundColor Yellow
-    $steps.Add([PSCustomObject]@{ Name = 'Wallpaper'; Success = $true; Skipped = $true }) | Out-Null
-}
-
-# --- Cursors ---
-if (-not $SkipCursors) {
-    try {
-        Write-Host ''
-        Write-Host '[Cursors] Installing macOS cursor scheme...' -ForegroundColor Cyan
-        $cursorResult = Set-CursorScheme -WhatIf:$WhatIfPreference
-        $steps.Add([PSCustomObject]@{ Name = 'Cursors'; Success = $true; Result = $cursorResult }) | Out-Null
-        Write-Host '[Cursors] Cursor scheme installed successfully.' -ForegroundColor Green
-    }
-    catch {
-        Write-Host "[Cursors] Failed to install cursor scheme: $_" -ForegroundColor Red
-        $steps.Add([PSCustomObject]@{ Name = 'Cursors'; Success = $false; Error = $_.Exception.Message }) | Out-Null
-        $overallSuccess = $false
-    }
-}
-else {
-    Write-Host ''
-    Write-Host '[Cursors] Skipped (SkipCursors specified).' -ForegroundColor Yellow
-    $steps.Add([PSCustomObject]@{ Name = 'Cursors'; Success = $true; Skipped = $true }) | Out-Null
-}
-
-# --- Start Menu ---
-if (-not $SkipStartMenu) {
-    try {
-        Write-Host ''
-        Write-Host '[StartMenu] Reconfiguring Start menu...' -ForegroundColor Cyan
-        $smResult = Set-StartMenuConfig -WhatIf:$WhatIfPreference
-        $steps.Add([PSCustomObject]@{ Name = 'StartMenu'; Success = $true; Result = $smResult }) | Out-Null
-        Write-Host '[StartMenu] Start menu configured successfully.' -ForegroundColor Green
-    }
-    catch {
-        Write-Host "[StartMenu] Failed to configure Start menu: $_" -ForegroundColor Red
-        $steps.Add([PSCustomObject]@{ Name = 'StartMenu'; Success = $false; Error = $_.Exception.Message }) | Out-Null
-        $overallSuccess = $false
-    }
-}
-else {
-    Write-Host ''
-    Write-Host '[StartMenu] Skipped (SkipStartMenu specified).' -ForegroundColor Yellow
-    $steps.Add([PSCustomObject]@{ Name = 'StartMenu'; Success = $true; Skipped = $true }) | Out-Null
 }
 
 # ---------------------------------------------------------------------------
