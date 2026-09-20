@@ -2,25 +2,6 @@
 
 # TestHelpers.ps1 — Shared mock utilities for WinToMac Pester tests
 
-function global:New-MockRegistryValue {
-    <#
-    .SYNOPSIS
-        Creates a mock object that behaves like registry property output from
-        Get-ItemProperty, with the specified property name and value.
-    #>
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
-
-        [Parameter()]
-        $Value = $null
-    )
-
-    $obj = [PSCustomObject]@{}
-    $obj | Add-Member -MemberType NoteProperty -Name $Name -Value $Value
-    return $obj
-}
-
 function global:New-MockBackupJson {
     <#
     .SYNOPSIS
